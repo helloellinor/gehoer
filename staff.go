@@ -1,12 +1,16 @@
 package main
 
-import rl "github.com/gen2brain/raylib-go/raylib"
+import (
+	"gehoer/metadata"
+
+	rl "github.com/gen2brain/raylib-go/raylib"
+)
 
 // global to allow staff helpers to access renderer defaults
 var currentRenderer *ScoreRenderer
 
 // DrawStaff draws 5 staff lines starting from the bottom line upward.
-// originX, originY = left end of the bottom staff line  
+// originX, originY = left end of the bottom staff line
 // lengthInStaffSpaces = staff line length in SMUFL staff space units
 // In SMUFL: staff lines are separated by exactly 1 staff space
 func DrawStaff(originX, originY float32, lengthInStaffSpaces float32) {
@@ -39,4 +43,28 @@ func DrawMeasureBar(originX, originY float32) {
 	// Shift inward by half thickness to keep outer edge inside measure bounds
 	x := originX - thickness/2
 	rl.DrawLineEx(rl.NewVector2(x, y1), rl.NewVector2(x, y2), thickness, rl.Black)
+}
+
+// DrawClef draws a clef symbol at the given staff position.
+// clefType: "treble" or "bass"
+// originX, originY: left end of the bottom staff line
+func DrawClef(clefType string, originX, originY float32, font rl.Font, smufl *metadata.SMuFLMetadata, bboxMap map[string]metadata.GlyphBBox) {
+	var clefName string
+	switch clefType {
+	case "bass":
+		clefName = "fClef"
+	default:
+		clefName = "gClef"
+	}
+	clefRune, err := smufl.GetGlyphRune(clefName)
+	if err != nil {
+		return // fallback: do nothing if glyph not found
+	}
+
+	// Use bboxMap for bounding box lookup, just like notes/rests
+	if bbox, hasBBox := bboxMap[clefName]; hasBBox {
+		drawGlyphWithBBox(font, clefRune, bbox, originX+StaffSpacesToPixels(0.5), originY-float32(bbox.NE[1]*2), 0)
+	} else {
+		rl.DrawTextEx(font, string(clefRune), rl.NewVector2(originX+StaffSpacesToPixels(0.5), originY), FontRenderSize, 0.0, rl.Black)
+	}
 }

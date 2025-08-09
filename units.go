@@ -11,7 +11,7 @@ package main
 const (
 	// PRIMARY CONSTANT: Font size in pixels (our only visual choice)
 	// This represents the em size - the fundamental unit in SMUFL
-	EmSizePx = 100 // Adjust this to make everything bigger/smaller
+	EmSizePx = 50 // Adjust this to make everything bigger/smaller
 
 	// Technical constants
 	FontLoadMultiplier       = 16 // Load at high resolution to avoid pixelation

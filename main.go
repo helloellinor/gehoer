@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	screenWidth  = 1000
-	screenHeight = 600
+	screenWidth  = 1200
+	screenHeight = 800
 )
 
 func drawGlyphWithBBox(
@@ -43,7 +43,7 @@ func drawGlyphWithBBox(
 func main() {
 	// Initialize Norwegian localization in C major
 	InitLocalization("C", "dur")
-	
+
 	// DEBUG: Print our SMUFL unit system
 	log.Printf("\n=== SMUFL UNIT SYSTEM ===")
 	log.Printf("EmSizePx: %.1f px (1 em)", float32(EmSizePx))
@@ -53,7 +53,7 @@ func main() {
 	log.Printf("FontLoadSize: %d px (font loading resolution)", FontLoadSize)
 	log.Printf("GridSpacingPx: %d px", GridSpacingPx)
 	log.Printf("GridFontSize: %d px", GridFontSize)
-	
+
 	// Print localization info
 	log.Printf("\n=== LOKALISERING ===")
 	log.Printf("Språk: %s", Loc.Language)
@@ -62,29 +62,29 @@ func main() {
 	log.Printf("C4 heter: %s", Loc.GetNoteName(60))
 	log.Printf("A#4/Bb4 heter: %s", Loc.GetNoteName(70))
 	log.Printf("Vesle sekund: %s", Loc.GetIntervalName(1))
-	
+
 	// Create sample scores
 	sampleScores := GetAllSampleScores()
 	lisaScore := sampleScores["lisa_gikk_til_skolen"]
-	
+
 	log.Printf("\n=== PARTITUR ===")
 	log.Printf("Laga partitur: %s", lisaScore.String())
 	for i, measure := range lisaScore.Measures[:3] { // Show first 3 measures
 		log.Printf("Takt %d: %s", i+1, measure.String())
 	}
-	
+
 	// Load SMuFL metadata from the official repository
 	smuflMetadata, err := metadata.LoadSMuFLMetadata("external/smufl")
 	if err != nil {
 		log.Fatalf("Failed to load SMuFL metadata: %v", err)
 	}
-	
+
 	// Print SMuFL info
 	log.Printf("\n=== SMuFL METADATA ===")
 	log.Printf("Loaded %d glyphs from official repository", len(smuflMetadata.Glyphs))
 	log.Printf("Available ranges: %d", len(smuflMetadata.Ranges))
 	log.Printf("Available classes: %d", len(smuflMetadata.Classes))
-	
+
 	// Load only the glyphs we need now: basic noteheads, clefs, accidentals, time signature digits, and flags used
 	// Basic noteheads we render
 	noteheadNames := []string{"noteheadWhole", "noteheadHalf", "noteheadBlack"}
@@ -127,7 +127,7 @@ func main() {
 	}
 
 	log.Printf("Loading %d selected glyphs (noteheads, clefs, accidentals, time signatures, flags)", len(allGlyphRunes))
-	
+
 	rl.InitWindow(int32(screenWidth), int32(screenHeight), "Gehør - Lisa gikk til skolen")
 	defer rl.CloseWindow()
 	rl.SetTargetFPS(60)
@@ -138,7 +138,7 @@ func main() {
 	}
 	defer rl.UnloadFont(font)
 
-	// Create bounding box map from SMuFL metadata 
+	// Create bounding box map from SMuFL metadata
 	bboxMap := smuflMetadata.CreateGlyphBoundingBoxMap()
 	// Load font-specific anchors and engraving defaults (generic loaders)
 	fontMetaPath := "assets/fonts/Leland/leland_metadata.json"
