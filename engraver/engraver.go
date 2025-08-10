@@ -19,11 +19,15 @@ type Engraver struct {
 }
 
 func NewEngraver(score *music.Score, font rl.Font, meta *smufl.Metadata) *Engraver {
+	// Calculate staff length based on score content
+	staffLength := calculateStaffLength(score)
+	
 	return &Engraver{
 		Score: score,
 		Font:  font,
 		Meta:  meta,
 		Notes: Notes{Score: score, Font: font},
+		Staff: Staff{LengthInStaffSpaces: staffLength},
 	}
 }
 
@@ -89,3 +93,4 @@ func (e *Engraver) Draw(highlightIndex int) {
 func (e *Engraver) Update() {
 	// TODO: Add update logic later
 }
+
