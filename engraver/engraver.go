@@ -60,6 +60,9 @@ func (e *Engraver) Draw(highlightIndex int) {
 		"barlineThickness":   0.2,
 	})
 
+	// Draw the clef at the beginning of the staff
+	e.Clef.Draw("gClef", staffOriginX, staffOriginY, e.Font, e.Meta)
+
 	yTop := staffOriginY - units.StaffSpacesToPixels(4) // 4 staff spaces above bottom line
 	yBottom := staffOriginY
 	thickness := float32(1.5)
@@ -112,6 +115,7 @@ func (e *Engraver) Draw(highlightIndex int) {
 func (e *Engraver) Update() {
 	// TODO: Add update logic later
 }
+
 
 
 
