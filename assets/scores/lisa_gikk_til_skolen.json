@@ -1,0 +1,34 @@
+{
+  "title": "Lisa gikk til skolen",
+  "composer": "Norsk barnesang",
+  "key_signature": { "tonic": "C", "mode": "dur" },
+  "time_signature": { "numerator": 4, "denominator": 4 },
+  "tempo": 120,
+  "measures": [
+    {
+      "number": 1,
+      "elements": [
+        { "type": "note", "pitch": 60, "duration": "quarter", "staff_line": 0, "accidental": "" },
+        { "type": "note", "pitch": 62, "duration": "quarter", "staff_line": 1, "accidental": "" },
+        { "type": "note", "pitch": 64, "duration": "quarter", "staff_line": 2, "accidental": "" },
+        { "type": "note", "pitch": 65, "duration": "quarter", "staff_line": 3, "accidental": "" }
+      ]
+    },
+    {
+      "number": 2,
+      "elements": [
+        { "type": "note", "pitch": 67, "duration": "quarter", "staff_line": 4, "accidental": "" },
+        { "type": "note", "pitch": 67, "duration": "quarter", "staff_line": 4, "accidental": "" },
+        { "type": "note", "pitch": 65, "duration": "quarter", "staff_line": 3, "accidental": "" },
+        { "type": "note", "pitch": 65, "duration": "quarter", "staff_line": 3, "accidental": "" }
+      ]
+    },
+    {
+      "number": 3,
+      "elements": [
+        { "type": "note", "pitch": 64, "duration": "half", "staff_line": 2, "accidental": "" },
+        { "type": "note", "pitch": 62, "duration": "half", "staff_line": 1, "accidental": "" }
+      ]
+    }
+  ]
+}

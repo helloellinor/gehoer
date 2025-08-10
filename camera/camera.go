@@ -4,7 +4,7 @@ import (
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-type CameraController struct {
+type Controller struct {
 	Camera    rl.Camera2D
 	Dragging  bool
 	LastPos   rl.Vector2
@@ -13,8 +13,8 @@ type CameraController struct {
 	MoveSpeed float32
 }
 
-func NewCameraController(screenWidth, screenHeight int) *CameraController {
-	return &CameraController{
+func NewController(screenWidth, screenHeight int) *Controller {
+	return &Controller{
 		Camera: rl.Camera2D{
 			Target:   rl.NewVector2(0, 0),
 			Offset:   rl.NewVector2(float32(screenWidth)/2, float32(screenHeight)/2),
@@ -29,7 +29,7 @@ func NewCameraController(screenWidth, screenHeight int) *CameraController {
 
 // Update processes input and updates the camera accordingly.
 // Should be called once per frame.
-func (cc *CameraController) Update() {
+func (cc *Controller) Update() {
 	// Keyboard pan
 	speed := cc.MoveSpeed / cc.Camera.Zoom
 	if rl.IsKeyDown(rl.KeyRight) {
