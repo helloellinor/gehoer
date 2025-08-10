@@ -16,6 +16,7 @@ type Engraver struct {
 	Meta  *smufl.Metadata // Add this field to hold SMuFL metadata
 	Notes Notes
 	Staff Staff
+	Clef  Clef
 }
 
 func NewEngraver(score *music.Score, font rl.Font, meta *smufl.Metadata) *Engraver {
@@ -110,5 +111,6 @@ func (e *Engraver) Draw(highlightIndex int) {
 func (e *Engraver) Update() {
 	// TODO: Add update logic later
 }
+
 
 
