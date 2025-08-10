@@ -31,6 +31,23 @@ func NewEngraver(score *music.Score, font rl.Font, meta *smufl.Metadata) *Engrav
 	}
 }
 
+// calculateStaffLength determines the appropriate staff length based on score content
+func calculateStaffLength(score *music.Score) float32 {
+	if score == nil || len(score.Measures) == 0 {
+		return 20.0 // Default fallback length
+	}
+	
+	// Calculate based on number of measures with some padding
+	// Using 100 staff spaces per measure (equivalent to ~400px at default scaling)
+	measureCount := float32(len(score.Measures))
+	staffLength := measureCount * 100.0
+	
+	// Add some padding at the end
+	staffLength += 10.0
+	
+	return staffLength
+}
+
 func (e *Engraver) Draw(highlightIndex int) {
 	staffOriginX := float32(50)
 	staffOriginY := float32(200)
@@ -93,4 +110,5 @@ func (e *Engraver) Draw(highlightIndex int) {
 func (e *Engraver) Update() {
 	// TODO: Add update logic later
 }
+
 
