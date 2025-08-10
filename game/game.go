@@ -39,7 +39,7 @@ func (g *Game) init() {
 	if err != nil {
 		panic("Failed to load music font: " + err.Error())
 	}
-	meta, err := smufl.LoadMetadata("/Users/eg/gehoer/external/smufl")
+	meta, err := smufl.LoadMetadata("external/smufl")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -68,3 +68,4 @@ func (g *Game) Draw() {
 	rl.EndMode2D()
 	rl.EndDrawing()
 }
+
