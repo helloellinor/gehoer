@@ -29,6 +29,7 @@ func NewEngraver(score *music.Score, font rl.Font, meta *smufl.Metadata) *Engrav
 		Meta:  meta,
 		Notes: Notes{Score: score, Font: font},
 		Staff: Staff{LengthInStaffSpaces: staffLength},
+		Clef:  Clef{},
 	}
 }
 
@@ -111,6 +112,7 @@ func (e *Engraver) Draw(highlightIndex int) {
 func (e *Engraver) Update() {
 	// TODO: Add update logic later
 }
+
 
 
 
