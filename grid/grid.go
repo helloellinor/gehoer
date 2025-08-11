@@ -2,19 +2,20 @@ package grid
 
 import (
 	"fmt"
+	"gehoer/renderer"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 type Grid struct {
-	Spacing       int     // distance in pixels between lines in world space
-	HalfWidth     int     // half width of grid in world units
-	HalfHeight    int     // half height of grid in world units
-	OriginX       float32 // grid origin X coordinate in world space
-	OriginY       float32 // grid origin Y coordinate in world space
-	LabelColor    rl.Color
-	LineColor     rl.Color
-	LabelFontSize int32
+	Spacing       int            // distance in pixels between lines in world space
+	HalfWidth     int            // half width of grid in world units
+	HalfHeight    int            // half height of grid in world units
+	OriginX       float32        // grid origin X coordinate in world space
+	OriginY       float32        // grid origin Y coordinate in world space
+	LabelColor    renderer.Color // color for grid labels
+	LineColor     renderer.Color // color for grid lines
+	LabelFontSize int32          // font size for labels
 }
 
 func New(spacing, halfWidth, halfHeight int, labelFontSize int32) *Grid {
@@ -24,41 +25,73 @@ func New(spacing, halfWidth, halfHeight int, labelFontSize int32) *Grid {
 		HalfHeight:    halfHeight,
 		OriginX:       0,
 		OriginY:       0,
-		LabelColor:    rl.DarkGray,
-		LineColor:     rl.LightGray,
+		LabelColor:    renderer.DarkGray,
+		LineColor:     renderer.LightGray,
 		LabelFontSize: labelFontSize,
 	}
 }
 
-func (g *Grid) Draw(camera rl.Camera2D) {
+// GenerateDrawCommands creates draw commands for the grid
+func (g *Grid) GenerateDrawCommands(camera rl.Camera2D, buffer *renderer.CommandBuffer) {
 	// Draw central axes
-	rl.DrawLine(int32(g.OriginX), -int32(g.HalfHeight), int32(g.OriginX), int32(g.HalfHeight), g.LineColor)
-	rl.DrawLine(-int32(g.HalfWidth), int32(g.OriginY), int32(g.HalfWidth), int32(g.OriginY), g.LineColor)
+	start := renderer.Vector2{X: g.OriginX, Y: float32(-g.HalfHeight)}
+	end := renderer.Vector2{X: g.OriginX, Y: float32(g.HalfHeight)}
+	buffer.AddCommand(renderer.NewLineCommand(start, end, 1.0, g.LineColor))
+
+	start = renderer.Vector2{X: float32(-g.HalfWidth), Y: g.OriginY}
+	end = renderer.Vector2{X: float32(g.HalfWidth), Y: g.OriginY}
+	buffer.AddCommand(renderer.NewLineCommand(start, end, 1.0, g.LineColor))
+
+	// Fade the grid line color for non-axes
+	fadedColor := renderer.Color{
+		R: uint8(float32(g.LineColor.R) * 0.25),
+		G: uint8(float32(g.LineColor.G) * 0.25),
+		B: uint8(float32(g.LineColor.B) * 0.25),
+		A: g.LineColor.A,
+	}
 
 	// Draw vertical grid lines + labels
 	for x := int(g.OriginX); x <= g.HalfWidth; x += g.Spacing {
-		rl.DrawLine(int32(x), -int32(g.HalfHeight), int32(x), int32(g.HalfHeight), rl.Fade(g.LineColor, 0.25))
-		g.drawLabel(fmt.Sprintf("%d", x), int32(x), int32(g.OriginY), camera)
+		start := renderer.Vector2{X: float32(x), Y: float32(-g.HalfHeight)}
+		end := renderer.Vector2{X: float32(x), Y: float32(g.HalfHeight)}
+		buffer.AddCommand(renderer.NewLineCommand(start, end, 1.0, fadedColor))
+		g.generateLabelCommand(fmt.Sprintf("%d", x), float32(x), g.OriginY, camera, buffer)
 	}
 	for x := int(g.OriginX); x >= -g.HalfWidth; x -= g.Spacing {
-		rl.DrawLine(int32(x), -int32(g.HalfHeight), int32(x), int32(g.HalfHeight), rl.Fade(g.LineColor, 0.25))
-		g.drawLabel(fmt.Sprintf("%d", x), int32(x), int32(g.OriginY), camera)
+		start := renderer.Vector2{X: float32(x), Y: float32(-g.HalfHeight)}
+		end := renderer.Vector2{X: float32(x), Y: float32(g.HalfHeight)}
+		buffer.AddCommand(renderer.NewLineCommand(start, end, 1.0, fadedColor))
+		g.generateLabelCommand(fmt.Sprintf("%d", x), float32(x), g.OriginY, camera, buffer)
 	}
 
 	// Draw horizontal grid lines + labels
 	for y := int(g.OriginY); y <= g.HalfHeight; y += g.Spacing {
-		rl.DrawLine(-int32(g.HalfWidth), int32(y), int32(g.HalfWidth), int32(y), rl.Fade(g.LineColor, 0.25))
-		g.drawLabel(fmt.Sprintf("%d", y), int32(g.OriginX), int32(y), camera)
+		start := renderer.Vector2{X: float32(-g.HalfWidth), Y: float32(y)}
+		end := renderer.Vector2{X: float32(g.HalfWidth), Y: float32(y)}
+		buffer.AddCommand(renderer.NewLineCommand(start, end, 1.0, fadedColor))
+		g.generateLabelCommand(fmt.Sprintf("%d", y), g.OriginX, float32(y), camera, buffer)
 	}
 	for y := int(g.OriginY); y >= -g.HalfHeight; y -= g.Spacing {
-		rl.DrawLine(-int32(g.HalfWidth), int32(y), int32(g.HalfWidth), int32(y), rl.Fade(g.LineColor, 0.25))
-		g.drawLabel(fmt.Sprintf("%d", y), int32(g.OriginX), int32(y), camera)
+		start := renderer.Vector2{X: float32(-g.HalfWidth), Y: float32(y)}
+		end := renderer.Vector2{X: float32(g.HalfWidth), Y: float32(y)}
+		buffer.AddCommand(renderer.NewLineCommand(start, end, 1.0, fadedColor))
+		g.generateLabelCommand(fmt.Sprintf("%d", y), g.OriginX, float32(y), camera, buffer)
 	}
 }
 
-// drawLabel draws the label text near the grid line in world space.
-func (g *Grid) drawLabel(text string, worldX, worldY int32, camera rl.Camera2D) {
+// generateLabelCommand creates a label text command near the grid line in world space.
+func (g *Grid) generateLabelCommand(text string, worldX, worldY float32, camera rl.Camera2D, buffer *renderer.CommandBuffer) {
 	// Draw label slightly offset so it doesn't overlap the line
-	offsetX, offsetY := int32(2), int32(2)
-	rl.DrawText(text, worldX+offsetX, worldY+offsetY, g.LabelFontSize, g.LabelColor)
+	offsetX, offsetY := float32(2), float32(2)
+	position := renderer.Vector2{X: worldX + offsetX, Y: worldY + offsetY}
+	buffer.AddCommand(renderer.NewTextCommand(text, position, g.LabelFontSize, g.LabelColor))
+}
+
+// Draw renders the grid using a renderer (for backwards compatibility)
+func (g *Grid) Draw(camera rl.Camera2D) {
+	buffer := renderer.NewCommandBuffer()
+	g.GenerateDrawCommands(camera, buffer)
+
+	raylibRenderer := renderer.NewRaylibRenderer()
+	buffer.Execute(raylibRenderer)
 }

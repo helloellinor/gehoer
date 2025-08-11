@@ -3,6 +3,7 @@ package engraver
 import (
 	"gehoer/music"
 	"gehoer/musicfont"
+	"gehoer/renderer"
 	"gehoer/units"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -22,14 +23,15 @@ func NewEngraver(score *music.Score, musicFont *musicfont.MusicFont) *Engraver {
 	}
 }
 
-// DrawGlyph helper to draw a glyph by its name, with color
-func (e *Engraver) DrawGlyph(glyphName string, x, y float32, color rl.Color) {
+// CreateGlyphCommand helper to create a glyph command by its name, with color
+func (e *Engraver) CreateGlyphCommand(glyphName string, x, y float32, color renderer.Color) *renderer.GlyphCommand {
 	glyph, ok := e.MusicFont.GetGlyph(glyphName)
 	if !ok {
-		// log or silently ignore missing glyph
-		return
+		// Return nil for missing glyph - caller should check
+		return nil
 	}
-	rl.DrawTextEx(e.MusicFont.Font, string(glyph.Codepoint), rl.NewVector2(x, y), e.fontSize, 0, color)
+	cmd := renderer.NewGlyphCommand(e.MusicFont.Font, glyph.Codepoint, renderer.Vector2{X: x, Y: y}, e.fontSize, color)
+	return &cmd
 }
 
 func (e *Engraver) MeasureLengthPx(measure *music.Measure) float32 {
@@ -57,17 +59,20 @@ func (e *Engraver) bboxWidthInPixels(bbox musicfont.GlyphBBox) float32 {
 	return units.StaffSpacesToPixels(float32(widthStaffSpaces))
 }
 
-// Draw renders the entire score (simplified example)
-func (e *Engraver) Draw(originX, originY float32) {
+// GenerateDrawCommands creates draw commands for the entire score (simplified example)
+func (e *Engraver) GenerateDrawCommands(originX, originY float32, buffer *renderer.CommandBuffer) {
 	x := originX
 	y := originY
 
 	for _, measure := range e.Score.Measures {
 		staffLength := e.MeasureLengthPx(measure)
-		e.DrawStaff(x, y, staffLength, rl.Black)
+		e.GenerateStaffCommands(x, y, staffLength, renderer.Black, buffer)
+
 		// Draw clef if present
 		if measure.Clef != "" {
-			e.DrawClef(measure.Clef, 0, 0, rl.Black)
+			if cmd := e.CreateGlyphCommand(measure.Clef, x, y, renderer.Black); cmd != nil {
+				buffer.AddCommand(*cmd)
+			}
 			x += 40 // arbitrary advance, use glyph bbox width ideally
 		}
 
@@ -75,16 +80,17 @@ func (e *Engraver) Draw(originX, originY float32) {
 		for _, elem := range measure.Elements {
 			switch el := elem.(type) {
 			case *music.Note:
-				e.DrawNote(el, x, y, rl.Black)
+				e.GenerateNoteCommands(el, x, y, renderer.Black, buffer)
 				x += 20 // advance x by some spacing (replace with glyph bbox width)
 			default:
-				e.DrawGlyph(el.GlyphName(), x, y, rl.Black)
+				if cmd := e.CreateGlyphCommand(el.GlyphName(), x, y, renderer.Black); cmd != nil {
+					buffer.AddCommand(*cmd)
+				}
 				x += 20
 			}
 		}
 
 		// Draw barline (not shown)
 		x += units.StaffSpacesToPixels(5) // some margin after each measure
-
 	}
 }

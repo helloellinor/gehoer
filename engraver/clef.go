@@ -1,10 +1,12 @@
 package engraver
 
 import (
-	rl "github.com/gen2brain/raylib-go/raylib"
+	"gehoer/renderer"
 )
 
-// DrawClef draws a clef glyph at position with color
-func (e *Engraver) DrawClef(clefName string, x, y float32, color rl.Color) {
-	e.DrawGlyph(clefName, x, y, color)
+// GenerateClefCommands creates a draw command for a clef glyph at position with color
+func (e *Engraver) GenerateClefCommands(clefName string, x, y float32, color renderer.Color, buffer *renderer.CommandBuffer) {
+	if cmd := e.CreateGlyphCommand(clefName, x, y, color); cmd != nil {
+		buffer.AddCommand(*cmd)
+	}
 }
