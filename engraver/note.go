@@ -4,8 +4,6 @@ import (
 	"gehoer/music"
 	"gehoer/renderer"
 	"gehoer/units"
-
-	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 // GenerateNoteCommands generates the drawing commands for a note including notehead, stem, flags, and ledger lines

@@ -20,7 +20,7 @@ var (
 	White     = Color{255, 255, 255, 255}
 	Red       = Color{255, 0, 0, 255}
 	DarkGray  = Color{80, 80, 80, 255}
-	LightGray = Color{200, 200, 200, 255}
+	LightGray = Color{220, 220, 220, 255}
 )
 
 // DrawCommand represents a drawing operation

@@ -5,8 +5,6 @@ import (
 	"gehoer/musicfont"
 	"gehoer/renderer"
 	"gehoer/units"
-
-	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 type Engraver struct {
