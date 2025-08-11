@@ -2,13 +2,12 @@ package engraver
 
 import (
 	"gehoer/music"
+	"gehoer/renderer"
 	"gehoer/units"
-
-	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-// DrawNote draws the notehead plus stem and flags programmatically
-func (e *Engraver) DrawNote(note *music.Note, x, y float32, color rl.Color) {
+// GenerateNoteCommands generates the drawing commands for a note including notehead, stem, flags, and ledger lines
+func (e *Engraver) GenerateNoteCommands(note *music.Note, x, y float32, color renderer.Color, buffer *renderer.CommandBuffer) {
 	noteheadName := note.NoteheadGlyphName()
 	glyph, ok := e.MusicFont.GetGlyph(noteheadName)
 	if !ok {
@@ -21,7 +20,8 @@ func (e *Engraver) DrawNote(note *music.Note, x, y float32, color rl.Color) {
 	noteheadY := y - verticalOffsetPx
 
 	// Draw notehead
-	DrawGlyph(e.MusicFont.Font, glyph.Codepoint, noteheadX, noteheadY, 0, color)
+	cmd := CreateGlyphCommand(e.MusicFont.Font, glyph.Codepoint, noteheadX, noteheadY, 0, color)
+	buffer.AddCommand(cmd)
 
 	if note.Duration != music.WholeNote {
 		stemUp := note.StaffLine < 3 // example rule for stem direction
@@ -58,7 +58,10 @@ func (e *Engraver) DrawNote(note *music.Note, x, y float32, color rl.Color) {
 			stemDrawX += stemThickness / 2
 		}
 
-		rl.DrawLineEx(rl.NewVector2(stemDrawX, stemStartY), rl.NewVector2(stemDrawX, stemEndY), stemThickness, color)
+		// Draw stem
+		start := renderer.Vector2{X: stemDrawX, Y: stemStartY}
+		end := renderer.Vector2{X: stemDrawX, Y: stemEndY}
+		buffer.AddCommand(renderer.NewLineCommand(start, end, stemThickness, color))
 
 		if note.HasFlag() {
 			flagName := e.flagGlyphName(note.Duration, stemUp)
@@ -78,7 +81,8 @@ func (e *Engraver) DrawNote(note *music.Note, x, y float32, color rl.Color) {
 				}
 				flagX := stemDrawX - dx
 				flagY := stemEndY + dy
-				DrawGlyph(e.MusicFont.Font, flagGlyph.Codepoint, flagX, flagY, 0, color)
+				flagCmd := CreateGlyphCommand(e.MusicFont.Font, flagGlyph.Codepoint, flagX, flagY, 0, color)
+				buffer.AddCommand(flagCmd)
 			}
 		}
 	}
@@ -89,7 +93,8 @@ func (e *Engraver) DrawNote(note *music.Note, x, y float32, color rl.Color) {
 		accidentalName := accidentalToGlyphName(note.Accidental)
 		accGlyph, ok := e.MusicFont.GetGlyph(accidentalName)
 		if ok {
-			DrawGlyph(e.MusicFont.Font, accGlyph.Codepoint, accidentalX, y, 0, color)
+			accCmd := CreateGlyphCommand(e.MusicFont.Font, accGlyph.Codepoint, accidentalX, y, 0, color)
+			buffer.AddCommand(accCmd)
 		}
 	}
 
@@ -106,15 +111,17 @@ func (e *Engraver) DrawNote(note *music.Note, x, y float32, color rl.Color) {
 		// ledger lines below staff
 		for line := bottomStaffLine - 2; line >= note.StaffLine; line -= 2 {
 			yLine := y + units.StaffSpacesToPixels(float32(bottomStaffLine-line)*0.5)
-			rl.DrawLineEx(rl.NewVector2(centerX-units.StaffSpacesToPixels(0.75), yLine),
-				rl.NewVector2(centerX+units.StaffSpacesToPixels(0.75), yLine), thickness, color)
+			start := renderer.Vector2{X: centerX - units.StaffSpacesToPixels(0.75), Y: yLine}
+			end := renderer.Vector2{X: centerX + units.StaffSpacesToPixels(0.75), Y: yLine}
+			buffer.AddCommand(renderer.NewLineCommand(start, end, thickness, color))
 		}
 	} else if note.StaffLine > topStaffLine {
 		// ledger lines above staff
 		for line := topStaffLine + 2; line <= note.StaffLine; line += 2 {
 			yLine := y - units.StaffSpacesToPixels(float32(line-topStaffLine)*0.5)
-			rl.DrawLineEx(rl.NewVector2(centerX-units.StaffSpacesToPixels(0.75), yLine),
-				rl.NewVector2(centerX+units.StaffSpacesToPixels(0.75), yLine), thickness, color)
+			start := renderer.Vector2{X: centerX - units.StaffSpacesToPixels(0.75), Y: yLine}
+			end := renderer.Vector2{X: centerX + units.StaffSpacesToPixels(0.75), Y: yLine}
+			buffer.AddCommand(renderer.NewLineCommand(start, end, thickness, color))
 		}
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"gehoer/grid"
 	"gehoer/music"
 	"gehoer/musicfont"
+	"gehoer/renderer"
 	"gehoer/settings"
 	"gehoer/units"
 
@@ -13,9 +14,11 @@ import (
 )
 
 type Game struct {
-	grid     *grid.Grid
-	camera   *camera.Controller
-	engraver *engraver.Engraver
+	grid          *grid.Grid
+	camera        *camera.Controller
+	engraver      *engraver.Engraver
+	renderer      renderer.Renderer
+	commandBuffer *renderer.CommandBuffer
 }
 
 func New() *Game {
@@ -27,6 +30,8 @@ func New() *Game {
 func (g *Game) init() {
 	g.grid = grid.New(units.GridSpacingPx, 4000, 4000, units.GridFontSizePx)
 	g.camera = camera.NewController(1200, 800)
+	g.renderer = renderer.NewRaylibRenderer()
+	g.commandBuffer = renderer.NewCommandBuffer()
 
 	// Load sample score from JSON file
 	score, err := music.LoadScoreFromJSON("assets/scores/lisa_gikk_til_skolen.json")
@@ -59,9 +64,17 @@ func (g *Game) Draw() {
 	rl.ClearBackground(rl.RayWhite)
 
 	rl.BeginMode2D(g.camera.Camera)
-	//rl.DrawTextEx(g.engraver.MusicFont.Font, "\uE0A2", rl.NewVector2(50, 300), 300, 0, rl.Black)
-	g.grid.Draw(g.camera.Camera)
-	g.engraver.Draw(0, 0)
+
+	// Clear the command buffer for this frame
+	g.commandBuffer.Clear()
+
+	// Generate all drawing commands
+	g.grid.GenerateDrawCommands(g.camera.Camera, g.commandBuffer)
+	g.engraver.GenerateDrawCommands(0, 0, g.commandBuffer)
+
+	// Execute all commands
+	g.commandBuffer.Execute(g.renderer)
+
 	rl.EndMode2D()
 	rl.EndDrawing()
 }
