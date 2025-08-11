@@ -6,9 +6,8 @@ import (
 	"gehoer/grid"
 	"gehoer/music"
 	"gehoer/musicfont"
-	"gehoer/smufl"
+	"gehoer/settings"
 	"gehoer/units"
-	"log"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -35,16 +34,12 @@ func (g *Game) init() {
 		panic("Failed to load score JSON: " + err.Error())
 	}
 
-	font, err := musicfont.LoadMusicFont("assets/fonts/Leland/Leland.otf", int32(units.FontRenderSizePx), nil)
+	font, err := musicfont.LoadMusicFont("external/smufl", "assets/fonts/Leland/leland_metadata.json", "assets/fonts/Leland/Leland.otf", settings.MusicFontSizePx)
 	if err != nil {
 		panic("Failed to load music font: " + err.Error())
 	}
-	meta, err := smufl.LoadMetadata("/Users/eg/gehoer/external/smufl")
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	g.engraver = engraver.NewEngraver(score, font, meta)
+	g.engraver = engraver.NewEngraver(score, font)
 }
 
 func (g *Game) Run() {
@@ -56,15 +51,17 @@ func (g *Game) Run() {
 
 func (g *Game) Update() {
 	g.camera.Update()
-	g.engraver.Update()
+	//g.engraver.Update()
 }
 
 func (g *Game) Draw() {
 	rl.BeginDrawing()
 	rl.ClearBackground(rl.RayWhite)
+
 	rl.BeginMode2D(g.camera.Camera)
+	//rl.DrawTextEx(g.engraver.MusicFont.Font, "\uE0A2", rl.NewVector2(50, 300), 300, 0, rl.Black)
 	g.grid.Draw(g.camera.Camera)
-	g.engraver.Draw(-1)
+	g.engraver.Draw(0, 0)
 	rl.EndMode2D()
 	rl.EndDrawing()
 }

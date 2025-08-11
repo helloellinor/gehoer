@@ -11,7 +11,7 @@
         { "type": "note", "pitch": 60, "duration": "quarter", "staff_line": 0, "accidental": "" },
         { "type": "note", "pitch": 62, "duration": "quarter", "staff_line": 1, "accidental": "" },
         { "type": "note", "pitch": 64, "duration": "quarter", "staff_line": 2, "accidental": "" },
-        { "type": "note", "pitch": 65, "duration": "quarter", "staff_line": 3, "accidental": "" }
+        { "type": "note", "pitch": 65, "duration": "sixteenth", "staff_line": 3, "accidental": "" }
       ]
     },
     {
@@ -27,7 +27,7 @@
       "number": 3,
       "elements": [
         { "type": "note", "pitch": 64, "duration": "half", "staff_line": 2, "accidental": "" },
-        { "type": "note", "pitch": 62, "duration": "half", "staff_line": 1, "accidental": "" }
+        { "type": "note", "pitch": 62, "duration": "sixteenth", "staff_line": 1, "accidental": "" }
       ]
     }
   ]

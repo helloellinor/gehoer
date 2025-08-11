@@ -4,9 +4,11 @@ import "gehoer/settings"
 
 // Derived unit variables initialized on package load
 var (
-	EmPx             = float32(settings.MusicFontSizePx)
-	StaffSpacePx     = EmPx * 0.25
+	FontLoadSizePx   = settings.MusicFontSizePx * settings.MusicFontLoadMultiplier
 	FontRenderSizePx = EmPx * settings.RaylibFontScaleFactor
+
+	EmPx         = float32(settings.MusicFontSizePx)
+	StaffSpacePx = EmPx * 0.25
 
 	GridSpacingPx  = int(StaffSpacePx * float32(settings.GridSpacingInStaffSpaces))
 	GridFontSizePx = int32(settings.MusicFontSizePx / 15)

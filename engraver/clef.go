@@ -1,19 +1,10 @@
 package engraver
 
 import (
-	"gehoer/smufl"
-	"gehoer/units"
-
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
-type Clef struct{}
-
-func (c *Clef) Draw(clefName string, originX, originY float32, font rl.Font, smufl *smufl.Metadata) {
-	clefRune, err := smufl.GetGlyphRune(clefName)
-	if err != nil {
-		return // silently ignore missing glyph
-	}
-
-	DrawGlyph(font, clefRune, originX+units.StaffSpacesToPixels(0.5), originY, 0, rl.Black)
+// DrawClef draws a clef glyph at position with color
+func (e *Engraver) DrawClef(clefName string, x, y float32, color rl.Color) {
+	e.DrawGlyph(clefName, x, y, color)
 }

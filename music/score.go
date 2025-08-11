@@ -1,6 +1,6 @@
 package music
 
-// NoteValue represents note durations
+// NoteValue represents note durations as an enum
 type NoteValue int
 
 const (
@@ -37,6 +37,7 @@ type TimeSignature struct {
 
 // Measure is one bar of music containing notes and rests
 type Measure struct {
+	Clef          string
 	Number        int
 	Elements      []MusicElement
 	TimeSignature TimeSignature
@@ -45,6 +46,7 @@ type Measure struct {
 // MusicElement interface implemented by Note and Rest
 type MusicElement interface {
 	GetDuration() NoteValue
+	GlyphName() string
 }
 
 // Note represents a musical note
@@ -55,9 +57,50 @@ type Note struct {
 	Accidental string // "", "sharp", "flat", "natural"
 }
 
+func (n *Note) GetDuration() NoteValue {
+	return n.Duration
+}
+
+func (n *Note) HasStem() bool {
+	switch n.Duration {
+	case WholeNote:
+		return false
+	default:
+		return true
+	}
+}
+
+func (n *Note) HasFlag() bool {
+	switch n.Duration {
+	case EighthNote, SixteenthNote, ThirtySecondNote, SixtyFourthNote:
+		return true
+	default:
+		return false
+	}
+}
+
+// NoteheadGlyphName returns the SMuFL glyph name for the notehead based on Duration
+func (n *Note) NoteheadGlyphName() string {
+	switch n.Duration {
+	case WholeNote:
+		return "noteheadWhole"
+	case HalfNote:
+		return "noteheadHalf"
+	case QuarterNote, EighthNote:
+		return "noteheadBlack"
+	// Add more durations if needed
+	default:
+		return "noteheadBlack" // fallback
+	}
+}
+
 // Rest represents a musical rest
 type Rest struct {
 	Duration NoteValue
+}
+
+func (r *Rest) GetDuration() NoteValue {
+	return r.Duration
 }
 
 // NewScore creates a new score with initial values and empty measure slice
@@ -92,31 +135,12 @@ func (s *Score) AddMeasure(ts *TimeSignature) *Measure {
 	return measure
 }
 
-// AddNote adds a note to the measure
-func (m *Measure) AddNote(pitch int, dur NoteValue, staffLine int, accidental string) {
-	n := Note{
-		Pitch:      pitch,
-		Duration:   dur,
-		StaffLine:  staffLine,
-		Accidental: accidental,
-	}
-	m.Elements = append(m.Elements, n)
+func (m *Measure) AddNote(note *Note) {
+	m.Elements = append(m.Elements, note)
 }
 
-// AddRest adds a rest to the measure
-func (m *Measure) AddRest(dur NoteValue) {
-	r := Rest{Duration: dur}
-	m.Elements = append(m.Elements, r)
-}
-
-// GetDuration returns duration of a Note
-func (n Note) GetDuration() NoteValue {
-	return n.Duration
-}
-
-// GetDuration returns duration of a Rest
-func (r Rest) GetDuration() NoteValue {
-	return r.Duration
+func (m *Measure) AddRest(rest *Rest) {
+	m.Elements = append(m.Elements, rest)
 }
 
 // ElementPositions returns x positions for elements spaced proportionally by duration
@@ -136,6 +160,7 @@ func (m *Measure) ElementPositions(width float32, leftMargin float32, rightMargi
 	return positions
 }
 
+// ElementBeats returns beat lengths for each element in the measure
 func (m *Measure) ElementBeats() []float32 {
 	beats := make([]float32, 0, len(m.Elements))
 	for _, e := range m.Elements {
@@ -146,6 +171,7 @@ func (m *Measure) ElementBeats() []float32 {
 	return beats
 }
 
+// durationQuarters converts NoteValue to quarter note units
 func durationQuarters(nv NoteValue) float32 {
 	switch nv {
 	case WholeNote:
@@ -168,50 +194,47 @@ func durationQuarters(nv NoteValue) float32 {
 }
 
 // noteValueToBeats converts a NoteValue to beats relative to the measure's denominator.
-// For example, if denominator=4 (quarter note gets the beat), an eighth note = 0.5 beats.
 func noteValueToBeats(nv NoteValue, denominator int) float32 {
-	// Convert NoteValue to quarter note units
-	var quarterUnits float32
-	switch nv {
-	case WholeNote:
-		quarterUnits = 4.0
-	case HalfNote:
-		quarterUnits = 2.0
-	case QuarterNote:
-		quarterUnits = 1.0
-	case EighthNote:
-		quarterUnits = 0.5
-	case SixteenthNote:
-		quarterUnits = 0.25
-	case ThirtySecondNote:
-		quarterUnits = 0.125
-	case SixtyFourthNote:
-		quarterUnits = 0.0625
-	default:
-		quarterUnits = 1.0
-	}
-
-	// Adjust based on denominator (e.g., denominator=4 means quarter note gets the beat)
+	quarterUnits := durationQuarters(nv)
 	return quarterUnits * float32(denominator) / 4.0
 }
 
-func (n Note) GetSMUFLName() string {
-	switch n.Duration {
-	case WholeNote:
-		return "noteWhole"
-	case HalfNote:
-		return "noteHalfUp"
-	case QuarterNote:
-		return "noteQuarterUp"
-	case EighthNote:
-		return "note8thUp"
-	case SixteenthNote:
-		return "note16thUp"
-	case ThirtySecondNote:
-		return "note32ndUp"
-	case SixtyFourthNote:
-		return "note64thUp"
+// parseDuration converts string duration to NoteValue enum
+func parseDuration(s string) NoteValue {
+	switch s {
+	case "whole":
+		return WholeNote
+	case "half":
+		return HalfNote
+	case "quarter":
+		return QuarterNote
+	case "eighth":
+		return EighthNote
+	case "sixteenth":
+		return SixteenthNote
+	case "thirtysecond":
+		return ThirtySecondNote
+	case "sixtyfourth":
+		return SixtyFourthNote
 	default:
-		return "noteQuarterUp" // fallback
+		return QuarterNote
+	}
+}
+
+func (n *Note) GlyphName() string {
+	return n.NoteheadGlyphName()
+}
+
+func (r *Rest) GlyphName() string {
+	switch r.Duration {
+	case WholeNote:
+		return "restWhole"
+	case HalfNote:
+		return "restHalf"
+	case QuarterNote:
+		return "restQuarter"
+	// add other durations as needed
+	default:
+		return "restQuarter"
 	}
 }

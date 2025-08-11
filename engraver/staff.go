@@ -11,23 +11,27 @@ type Staff struct {
 	// You can add thickness or other rendering options here if needed
 }
 
-func (s *Staff) Draw(originX, originY float32, fontDefaults map[string]float32) {
-	lengthPx := units.StaffSpacesToPixels(s.LengthInStaffSpaces)
-	thickness := float32(1)
-	if v, ok := fontDefaults["staffLineThickness"]; ok {
-		thickness = units.StaffSpacesToPixels(float32(v))
-	}
+func (e *Engraver) DrawStaff(x, y, lengthPx float32, color rl.Color) {
+	thickness := float32(e.MusicFont.EngravingDefaults.StaffLineThickness)
+	thickness = units.StaffSpacesToPixels(thickness)
 
 	for i := 0; i < 5; i++ {
-		y := originY - units.StaffSpacesToPixels(float32(i))
-		rl.DrawLineEx(rl.NewVector2(originX, y), rl.NewVector2(originX+lengthPx, y), thickness, rl.Black)
+		// Draw lines stacked vertically with proper spacing
+		lineY := y - units.StaffSpacesToPixels(float32(i))
+		rl.DrawLineEx(rl.NewVector2(x, lineY), rl.NewVector2(x+lengthPx, lineY), thickness, color)
 	}
 
-	// Draw measure bar at the end of staff
-	s.DrawMeasureBar(originX+lengthPx, originY, fontDefaults)
+	// Draw measure barline at the end
+	barlineThickness := float32(2.0)
+
+	barlineX := x + lengthPx - barlineThickness/2
+	barlineTopY := y - units.StaffSpacesToPixels(4) // top of staff
+	barlineBottomY := y
+
+	rl.DrawLineEx(rl.NewVector2(barlineX, barlineTopY), rl.NewVector2(barlineX, barlineBottomY), barlineThickness, color)
 }
 
-func (s *Staff) DrawMeasureBar(originX, originY float32, fontDefaults map[string]float32) {
+func (s *Staff) DrawBarline(originX, originY float32, fontDefaults map[string]float32) {
 	y1 := originY - units.EmsToPixels(1) // 1 em above bottom line
 	y2 := originY
 	thickness := float32(2.0)

@@ -52,31 +52,20 @@ func LoadScoreFromJSON(path string) (*Score, error) {
 			switch elem.Type {
 			case "note":
 				dur := parseDuration(elem.Duration)
-				measure.AddNote(elem.Pitch, dur, elem.StaffLine, elem.Accidental)
+				measure.AddNote(&Note{
+					Pitch:      elem.Pitch,
+					Duration:   dur,
+					StaffLine:  elem.StaffLine,
+					Accidental: elem.Accidental,
+				})
 			case "rest":
 				dur := parseDuration(elem.Duration)
-				measure.AddRest(dur)
+				measure.AddRest(&Rest{
+					Duration: dur,
+				})
 			}
 		}
 	}
 
 	return score, nil
-}
-
-func parseDuration(dur string) NoteValue {
-	switch dur {
-	case "whole":
-		return WholeNote
-	case "half":
-		return HalfNote
-	case "quarter":
-		return QuarterNote
-	case "eighth":
-		return EighthNote
-	case "sixteenth":
-		return SixteenthNote
-	// add more if you like
-	default:
-		return QuarterNote // fallback
-	}
 }
