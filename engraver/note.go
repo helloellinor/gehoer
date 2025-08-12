@@ -6,7 +6,12 @@ import (
 	"gehoer/units"
 )
 
-// GenerateNoteCommands generates the drawing commands for a note including notehead, stem, flags, and ledger lines
+// GenerateNoteCommands creates all drawing commands for a note:
+// - Notehead positioned by staff line
+// - Stem (if not whole note) with proper direction and length
+// - Flags (for eighth notes and shorter) with correct rotation
+// - Accidentals (if present) positioned to the left
+// - Ledger lines (if note is outside normal staff range)
 func (e *Engraver) GenerateNoteCommands(note *music.Note, x, y float32, color renderer.Color, buffer *renderer.CommandBuffer) {
 	noteheadName := note.NoteheadGlyphName()
 	glyph, ok := e.MusicFont.GetGlyph(noteheadName)
@@ -63,24 +68,23 @@ func (e *Engraver) GenerateNoteCommands(note *music.Note, x, y float32, color re
 		end := renderer.Vector2{X: stemDrawX, Y: stemEndY}
 		buffer.AddCommand(renderer.NewLineCommand(start, end, stemThickness, color))
 
+		// Draw flags for eighth notes and shorter
 		if note.HasFlag() {
 			flagName := e.flagGlyphName(note.Duration, stemUp)
-			flagGlyph, ok := e.MusicFont.GetGlyph(flagName)
-			if ok {
-				dx, dy := float32(0), float32(0)
+			if flagGlyph, ok := e.MusicFont.GetGlyph(flagName); ok {
+				// Simplified flag positioning
+				flagX := stemDrawX
+				flagY := stemEndY
+
+				// Adjust position based on stem direction
 				if stemUp {
-					if a, ok := e.MusicFont.Anchors[flagName]["stemUpNW"]; ok {
-						dx = units.StaffSpacesToPixels(float32(a[0])) + float32(e.MusicFont.EngravingDefaults.StemThickness)*4
-						dy = units.StaffSpacesToPixels(float32(a[1]))
-					}
+					// Flags attach to the top of stems for stem-up notes
+					flagX += units.StaffSpacesToPixels(0.1) // slight right offset
 				} else {
-					if a, ok := e.MusicFont.Anchors[flagName]["stemDownSW"]; ok {
-						dx = units.StaffSpacesToPixels(float32(a[0])) - float32(e.MusicFont.EngravingDefaults.StemThickness)*4
-						dy = units.StaffSpacesToPixels(float32(a[1]))
-					}
+					// Flags attach to the bottom of stems for stem-down notes
+					flagX -= units.StaffSpacesToPixels(0.1) // slight left offset
 				}
-				flagX := stemDrawX - dx
-				flagY := stemEndY + dy
+
 				flagCmd := CreateGlyphCommand(e.MusicFont.Font, flagGlyph.Codepoint, flagX, flagY, 0, color)
 				buffer.AddCommand(flagCmd)
 			}
