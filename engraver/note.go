@@ -24,9 +24,12 @@ func (e *Engraver) GenerateNoteCommands(note *music.Note, x, y float32, color re
 	noteheadX := x
 
 	// Account for glyph baseline offset - noteheads should be centered on staff lines
-	// The glyph bbox center Y should align with the staff line
+	// SMUFL coordinates: Y=0 is staff line, Y increases upward (mathematical coords)
+	// Screen coordinates: Y increases downward 
+	// If glyph center is above SMUFL baseline (positive), move glyph down in screen coords (add pixels)
+	// If glyph center is below SMUFL baseline (negative), move glyph up in screen coords (subtract pixels)
 	glyphCenterY := (glyph.BBox.SW[1] + glyph.BBox.NE[1]) / 2
-	baselineAdjustment := units.StaffSpacesToPixels(float32(-glyphCenterY))
+	baselineAdjustment := units.StaffSpacesToPixels(float32(glyphCenterY))
 	noteheadY := y - verticalOffsetPx + baselineAdjustment
 
 	// Draw notehead
