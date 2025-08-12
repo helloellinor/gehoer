@@ -20,7 +20,58 @@ type Score struct {
 	KeySignature  KeySignature
 	TimeSignature TimeSignature
 	Tempo         int
-	Measures      []*Measure
+	Instrument    string     // "treble", "bass", "piano", etc.
+	Staves        []*Staff   // Multiple staves for complex instruments
+	Measures      []*Measure // For single-staff compatibility
+}
+
+// Staff represents a single staff line (treble, bass, etc.)
+type Staff struct {
+	Clef     string     // "treble", "bass", "alto", etc.
+	Measures []*Measure // Measures for this staff
+}
+
+// Instrument types
+const (
+	InstrumentTreble = "treble"
+	InstrumentBass   = "bass"
+	InstrumentPiano  = "piano"
+)
+
+// GetStaffCount returns the number of staves based on instrument type
+func (s *Score) GetStaffCount() int {
+	switch s.Instrument {
+	case InstrumentPiano:
+		return 2 // Treble and bass
+	case InstrumentTreble, InstrumentBass:
+		return 1
+	default:
+		if len(s.Staves) > 0 {
+			return len(s.Staves)
+		}
+		return 1 // Default single staff
+	}
+}
+
+// GetStaves returns the staves for rendering, creating them if needed
+func (s *Score) GetStaves() []*Staff {
+	if len(s.Staves) > 0 {
+		return s.Staves
+	}
+
+	// Create staves based on instrument type
+	switch s.Instrument {
+	case InstrumentPiano:
+		trebleStaff := &Staff{Clef: "gClef", Measures: s.Measures}
+		bassStaff := &Staff{Clef: "fClef", Measures: []*Measure{}} // Empty for now
+		return []*Staff{trebleStaff, bassStaff}
+	case InstrumentBass:
+		bassStaff := &Staff{Clef: "fClef", Measures: s.Measures}
+		return []*Staff{bassStaff}
+	default: // treble or unspecified
+		trebleStaff := &Staff{Clef: "gClef", Measures: s.Measures}
+		return []*Staff{trebleStaff}
+	}
 }
 
 // KeySignature stores tonic and mode info

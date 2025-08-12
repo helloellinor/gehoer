@@ -1,0 +1,78 @@
+{
+  "title": "Twinkle, Twinkle, Little Star",
+  "composer": "Wolfgang Amadeus Mozart (K. 265 Theme)",
+  "instrument": "treble",
+  "key_signature": { "tonic": "C", "mode": "dur" },
+  "time_signature": { "numerator": 4, "denominator": 4 },
+  "tempo": 120,
+  "measures": [
+    {
+      "number": 1,
+      "elements": [
+        { "type": "note", "pitch": 60, "duration": "quarter", "staff_line": 0, "accidental": "" },
+        { "type": "note", "pitch": 60, "duration": "quarter", "staff_line": 0, "accidental": "" },
+        { "type": "note", "pitch": 67, "duration": "quarter", "staff_line": 4, "accidental": "" },
+        { "type": "note", "pitch": 67, "duration": "quarter", "staff_line": 4, "accidental": "" }
+      ]
+    },
+    {
+      "number": 2,
+      "elements": [
+        { "type": "note", "pitch": 69, "duration": "quarter", "staff_line": 5, "accidental": "" },
+        { "type": "note", "pitch": 69, "duration": "quarter", "staff_line": 5, "accidental": "" },
+        { "type": "note", "pitch": 67, "duration": "half", "staff_line": 4, "accidental": "" }
+      ]
+    },
+    {
+      "number": 3,
+      "elements": [
+        { "type": "note", "pitch": 65, "duration": "quarter", "staff_line": 3, "accidental": "" },
+        { "type": "note", "pitch": 65, "duration": "quarter", "staff_line": 3, "accidental": "" },
+        { "type": "note", "pitch": 64, "duration": "quarter", "staff_line": 2, "accidental": "" },
+        { "type": "note", "pitch": 64, "duration": "quarter", "staff_line": 2, "accidental": "" }
+      ]
+    },
+    {
+      "number": 4,
+      "elements": [
+        { "type": "note", "pitch": 62, "duration": "quarter", "staff_line": 1, "accidental": "" },
+        { "type": "note", "pitch": 62, "duration": "quarter", "staff_line": 1, "accidental": "" },
+        { "type": "note", "pitch": 60, "duration": "half", "staff_line": 0, "accidental": "" }
+      ]
+    },
+    {
+      "number": 5,
+      "elements": [
+        { "type": "note", "pitch": 67, "duration": "quarter", "staff_line": 4, "accidental": "" },
+        { "type": "note", "pitch": 67, "duration": "quarter", "staff_line": 4, "accidental": "" },
+        { "type": "note", "pitch": 65, "duration": "quarter", "staff_line": 3, "accidental": "" },
+        { "type": "note", "pitch": 65, "duration": "quarter", "staff_line": 3, "accidental": "" }
+      ]
+    },
+    {
+      "number": 6,
+      "elements": [
+        { "type": "note", "pitch": 64, "duration": "quarter", "staff_line": 2, "accidental": "" },
+        { "type": "note", "pitch": 64, "duration": "quarter", "staff_line": 2, "accidental": "" },
+        { "type": "note", "pitch": 62, "duration": "half", "staff_line": 1, "accidental": "" }
+      ]
+    },
+    {
+      "number": 7,
+      "elements": [
+        { "type": "note", "pitch": 67, "duration": "quarter", "staff_line": 4, "accidental": "" },
+        { "type": "note", "pitch": 67, "duration": "quarter", "staff_line": 4, "accidental": "" },
+        { "type": "note", "pitch": 65, "duration": "quarter", "staff_line": 3, "accidental": "" },
+        { "type": "note", "pitch": 65, "duration": "quarter", "staff_line": 3, "accidental": "" }
+      ]
+    },
+    {
+      "number": 8,
+      "elements": [
+        { "type": "note", "pitch": 64, "duration": "quarter", "staff_line": 2, "accidental": "" },
+        { "type": "note", "pitch": 64, "duration": "quarter", "staff_line": 2, "accidental": "" },
+        { "type": "note", "pitch": 62, "duration": "half", "staff_line": 1, "accidental": "" }
+      ]
+    }
+  ]
+}

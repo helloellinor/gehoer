@@ -46,20 +46,57 @@ func (e *Engraver) CreateGlyphCommand(glyphName string, x, y float32, color rend
 	return &cmd
 }
 
-// MeasureLengthPx calculates the pixel width needed for a measure
+// SpacingConfig defines spacing rules for different glyph types
+type SpacingConfig struct {
+	// Spacing in em units for different glyph types
+	NoteSpacing       float32
+	ClefSpacing       float32
+	AccidentalSpacing float32
+	RestSpacing       float32
+
+	// Minimum spacing between any elements
+	MinimumSpacing float32
+}
+
+// DefaultSpacingConfig returns sensible default spacing values
+func DefaultSpacingConfig() SpacingConfig {
+	return SpacingConfig{
+		NoteSpacing:       0.5, // 0.5 em between notes
+		ClefSpacing:       0.8, // 0.8 em around clefs
+		AccidentalSpacing: 0.3, // 0.3 em around accidentals
+		RestSpacing:       0.4, // 0.4 em around rests
+		MinimumSpacing:    0.2, // 0.2 em minimum
+	}
+}
+
+// GetElementSpacing returns appropriate spacing for a music element
+func (e *Engraver) GetElementSpacing(elem music.MusicElement, config SpacingConfig) float32 {
+	switch elem.(type) {
+	case *music.Note:
+		return units.EmsToPixels(config.NoteSpacing)
+	case *music.Rest:
+		return units.EmsToPixels(config.RestSpacing)
+	default:
+		return units.EmsToPixels(config.MinimumSpacing)
+	}
+}
+
+// MeasureLengthPx calculates the pixel width needed for a measure using bounding box-based spacing
 func (e *Engraver) MeasureLengthPx(measure *music.Measure) float32 {
-	const elementSpacing = 2.0 // staff spaces between elements
+	config := DefaultSpacingConfig()
 	totalWidth := float32(0)
-	spacing := units.StaffSpacesToPixels(elementSpacing)
 
 	for _, elem := range measure.Elements {
 		glyphName := elem.GlyphName()
 		if glyph, ok := e.MusicFont.GetGlyph(glyphName); ok {
 			bboxWidth := e.bboxWidthInPixels(glyph.BBox)
+			spacing := e.GetElementSpacing(elem, config)
 			totalWidth += bboxWidth + spacing
 		} else {
 			// Fallback width for missing glyphs
-			totalWidth += units.StaffSpacesToPixels(2) + spacing
+			fallbackWidth := units.EmsToPixels(1.0) // 1 em fallback
+			fallbackSpacing := units.EmsToPixels(config.MinimumSpacing)
+			totalWidth += fallbackWidth + fallbackSpacing
 		}
 	}
 	return totalWidth
@@ -72,16 +109,27 @@ func (e *Engraver) bboxWidthInPixels(bbox musicfont.GlyphBBox) float32 {
 	return units.StaffSpacesToPixels(float32(widthStaffSpaces))
 }
 
-// GenerateDrawCommands creates draw commands for the entire score with line breaking
+// GenerateDrawCommands creates draw commands for the entire score with line breaking and multi-staff support
 func (e *Engraver) GenerateDrawCommands(originX, originY float32, buffer *renderer.CommandBuffer) {
 	const maxLineWidth = 1000.0 // Maximum width before line break (pixels)
 	const lineHeight = 150.0    // Height between staff lines (pixels)
+	const stavesSpacing = 120.0 // Spacing between staves for multi-staff instruments (pixels)
 
+	staves := e.Score.GetStaves()
+
+	for staffIndex, staff := range staves {
+		staffY := originY + float32(staffIndex)*stavesSpacing
+		e.generateStaffDrawCommands(staff, originX, staffY, maxLineWidth, lineHeight, buffer)
+	}
+}
+
+// generateStaffDrawCommands handles rendering for a single staff
+func (e *Engraver) generateStaffDrawCommands(staff *music.Staff, originX, originY, maxLineWidth, lineHeight float32, buffer *renderer.CommandBuffer) {
 	x := originX
 	y := originY
 	lineWidth := float32(0)
 
-	for _, measure := range e.Score.Measures {
+	for _, measure := range staff.Measures {
 		// Calculate staff length for this measure
 		staffLength := e.MeasureLengthPx(measure)
 
@@ -96,7 +144,7 @@ func (e *Engraver) GenerateDrawCommands(originX, originY float32, buffer *render
 			staffLength += prefixWidth
 		}
 
-		measureSpacing := units.StaffSpacesToPixels(2)
+		measureSpacing := units.EmsToPixels(0.5) // Use em-based spacing
 		totalMeasureWidth := staffLength + measureSpacing
 
 		// Check if we need to break to a new line
@@ -115,13 +163,7 @@ func (e *Engraver) GenerateDrawCommands(originX, originY float32, buffer *render
 
 		// Draw clef and key signature if first measure of line
 		if isFirstMeasureOfLine {
-			// Draw treble clef
-			if cmd := e.CreateGlyphCommand("gClef", x+units.StaffSpacesToPixels(0.5), y-units.StaffSpacesToPixels(2), renderer.Black); cmd != nil {
-				buffer.AddCommand(*cmd)
-			}
-
-			// Draw key signature after clef
-			e.GenerateKeySignatureCommands(x+clefWidth, y, renderer.Black, buffer)
+			e.renderClefAndKeySignature(staff.Clef, x, y, clefWidth, buffer)
 		}
 
 		// Start drawing elements
@@ -135,7 +177,7 @@ func (e *Engraver) GenerateDrawCommands(originX, originY float32, buffer *render
 		if isFirstMeasureOfLine {
 			availableWidth -= prefixWidth
 		}
-		positions := measure.ElementPositions(availableWidth, 0, units.StaffSpacesToPixels(1))
+		positions := measure.ElementPositions(availableWidth, 0, units.EmsToPixels(0.2))
 		for i, elem := range measure.Elements {
 			elemX := elemStartX
 			if i < len(positions) {
@@ -152,10 +194,40 @@ func (e *Engraver) GenerateDrawCommands(originX, originY float32, buffer *render
 			}
 		}
 
-		// Move to next measure position
+		// Update position for next measure
 		x += totalMeasureWidth
 		lineWidth += totalMeasureWidth
 	}
+}
+
+// renderClefAndKeySignature draws the clef and key signature for a staff
+func (e *Engraver) renderClefAndKeySignature(clefType string, x, y, clefWidth float32, buffer *renderer.CommandBuffer) {
+	// Draw clef
+	clefX := x + units.StaffSpacesToPixels(0.5)
+	var clefY float32
+
+	switch clefType {
+	case "gClef":
+		clefY = y - units.StaffSpacesToPixels(1) // G line position
+	case "fClef":
+		clefY = y - units.StaffSpacesToPixels(3) // F line position
+	default:
+		clefY = y - units.StaffSpacesToPixels(1) // Default to treble
+	}
+
+	// Adjust for glyph baseline
+	if clefGlyph, ok := e.MusicFont.GetGlyph(clefType); ok {
+		glyphCenterY := (clefGlyph.BBox.SW[1] + clefGlyph.BBox.NE[1]) / 2
+		baselineAdjustment := units.StaffSpacesToPixels(float32(-glyphCenterY))
+		clefY += baselineAdjustment
+	}
+
+	if cmd := e.CreateGlyphCommand(clefType, clefX, clefY, renderer.Black); cmd != nil {
+		buffer.AddCommand(*cmd)
+	}
+
+	// Draw key signature after clef
+	e.GenerateKeySignatureCommands(x+clefWidth, y, renderer.Black, buffer)
 }
 
 // getKeySignatureWidth calculates the width needed for the key signature

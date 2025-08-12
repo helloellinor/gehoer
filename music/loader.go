@@ -21,6 +21,7 @@ type JSONMeasure struct {
 type JSONScore struct {
 	Title        string `json:"title"`
 	Composer     string `json:"composer"`
+	Instrument   string `json:"instrument,omitempty"` // "treble", "bass", "piano"
 	KeySignature struct {
 		Tonic string `json:"tonic"`
 		Mode  string `json:"mode"`
@@ -45,6 +46,13 @@ func LoadScoreFromJSON(path string) (*Score, error) {
 	}
 
 	score := NewScore(js.Title, js.Composer, js.KeySignature.Tonic, js.KeySignature.Mode, js.TimeSignature.Numerator, js.TimeSignature.Denominator, js.Tempo)
+
+	// Set instrument type (default to treble if not specified)
+	if js.Instrument != "" {
+		score.Instrument = js.Instrument
+	} else {
+		score.Instrument = InstrumentTreble
+	}
 
 	for _, jm := range js.Measures {
 		measure := score.AddMeasure(nil) // Use default time signature or extend for per-measure

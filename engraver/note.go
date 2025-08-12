@@ -22,7 +22,12 @@ func (e *Engraver) GenerateNoteCommands(note *music.Note, x, y float32, color re
 	// Vertical offset for the notehead position on staff lines (staffLine = 0 is bottom line)
 	verticalOffsetPx := units.StaffSpacesToPixels(float32(note.StaffLine))
 	noteheadX := x
-	noteheadY := y - verticalOffsetPx
+
+	// Account for glyph baseline offset - noteheads should be centered on staff lines
+	// The glyph bbox center Y should align with the staff line
+	glyphCenterY := (glyph.BBox.SW[1] + glyph.BBox.NE[1]) / 2
+	baselineAdjustment := units.StaffSpacesToPixels(float32(-glyphCenterY))
+	noteheadY := y - verticalOffsetPx + baselineAdjustment
 
 	// Draw notehead
 	cmd := CreateGlyphCommand(e.MusicFont.Font, glyph.Codepoint, noteheadX, noteheadY, 0, color)
