@@ -42,7 +42,7 @@ func (e *Engraver) CreateGlyphCommand(glyphName string, x, y float32, color rend
 	if !ok {
 		return nil
 	}
-	cmd := renderer.NewGlyphCommand(e.MusicFont.Font, glyph.Codepoint, renderer.Vector2{X: x, Y: y}, e.fontSize, color)
+	cmd := CreateGlyphCommand(e.MusicFont.Font, glyph.Codepoint, x, y, 0, color)
 	return &cmd
 }
 
@@ -173,9 +173,9 @@ func (e *Engraver) GenerateKeySignatureCommands(x, y float32, color renderer.Col
 	sharps, flats := e.getKeySignatureAccidentals()
 
 	if sharps > 0 {
-		e.drawSharps(x, y, sharps, color, buffer)
+		e.drawAccidentals(x, y, sharps, true, color, buffer)
 	} else if flats > 0 {
-		e.drawFlats(x, y, flats, color, buffer)
+		e.drawAccidentals(x, y, flats, false, color, buffer)
 	}
 }
 
@@ -184,71 +184,38 @@ func (e *Engraver) getKeySignatureAccidentals() (sharps, flats int) {
 	tonic := e.Score.KeySignature.Tonic
 	mode := e.Score.KeySignature.Mode
 
-	// Major keys
+	// Major keys (only supporting major keys for now)
 	if mode == "dur" || mode == "major" {
-		switch tonic {
-		case "C":
-			return 0, 0
-		case "G":
-			return 1, 0 // F#
-		case "D":
-			return 2, 0 // F#, C#
-		case "A":
-			return 3, 0 // F#, C#, G#
-		case "E":
-			return 4, 0 // F#, C#, G#, D#
-		case "B":
-			return 5, 0 // F#, C#, G#, D#, A#
-		case "F#":
-			return 6, 0 // F#, C#, G#, D#, A#, E#
-		case "C#":
-			return 7, 0 // All sharps
-		case "F":
-			return 0, 1 // Bb
-		case "Bb":
-			return 0, 2 // Bb, Eb
-		case "Eb":
-			return 0, 3 // Bb, Eb, Ab
-		case "Ab":
-			return 0, 4 // Bb, Eb, Ab, Db
-		case "Db":
-			return 0, 5 // Bb, Eb, Ab, Db, Gb
-		case "Gb":
-			return 0, 6 // Bb, Eb, Ab, Db, Gb, Cb
-		case "Cb":
-			return 0, 7 // All flats
+		majorKeyMap := map[string][2]int{
+			"C": {0, 0}, "G": {1, 0}, "D": {2, 0}, "A": {3, 0}, "E": {4, 0}, "B": {5, 0}, "F#": {6, 0}, "C#": {7, 0},
+			"F": {0, 1}, "Bb": {0, 2}, "Eb": {0, 3}, "Ab": {0, 4}, "Db": {0, 5}, "Gb": {0, 6}, "Cb": {0, 7},
+		}
+		if accidentals, ok := majorKeyMap[tonic]; ok {
+			return accidentals[0], accidentals[1]
 		}
 	}
 
-	// TODO: Add support for minor keys if needed
 	return 0, 0 // Default to C major
 }
 
-// drawSharps draws the specified number of sharps in key signature order
-func (e *Engraver) drawSharps(x, y float32, count int, color renderer.Color, buffer *renderer.CommandBuffer) {
-	// Sharp positions on treble clef (staff line offsets)
-	sharpPositions := []float32{2.5, 3.5, 2, 3, 1.5, 2.5, 1} // F#, C#, G#, D#, A#, E#, B#
+// drawAccidentals draws sharps or flats in key signature order
+func (e *Engraver) drawAccidentals(x, y float32, count int, isSharp bool, color renderer.Color, buffer *renderer.CommandBuffer) {
+	var glyphName string
+	var positions []float32
 
-	for i := 0; i < count && i < len(sharpPositions); i++ {
-		sharpX := x + units.StaffSpacesToPixels(float32(i)*0.75)
-		sharpY := y - units.StaffSpacesToPixels(sharpPositions[i])
-
-		if cmd := e.CreateGlyphCommand("accidentalSharp", sharpX, sharpY, color); cmd != nil {
-			buffer.AddCommand(*cmd)
-		}
+	if isSharp {
+		glyphName = "accidentalSharp"
+		positions = []float32{2.5, 3.5, 2, 3, 1.5, 2.5, 1} // F#, C#, G#, D#, A#, E#, B#
+	} else {
+		glyphName = "accidentalFlat"
+		positions = []float32{3, 1.5, 3.5, 2, 4, 2.5, 4.5} // Bb, Eb, Ab, Db, Gb, Cb, Fb
 	}
-}
 
-// drawFlats draws the specified number of flats in key signature order
-func (e *Engraver) drawFlats(x, y float32, count int, color renderer.Color, buffer *renderer.CommandBuffer) {
-	// Flat positions on treble clef (staff line offsets)
-	flatPositions := []float32{3, 1.5, 3.5, 2, 4, 2.5, 4.5} // Bb, Eb, Ab, Db, Gb, Cb, Fb
+	for i := 0; i < count && i < len(positions); i++ {
+		accX := x + units.StaffSpacesToPixels(float32(i)*0.75)
+		accY := y - units.StaffSpacesToPixels(positions[i])
 
-	for i := 0; i < count && i < len(flatPositions); i++ {
-		flatX := x + units.StaffSpacesToPixels(float32(i)*0.75)
-		flatY := y - units.StaffSpacesToPixels(flatPositions[i])
-
-		if cmd := e.CreateGlyphCommand("accidentalFlat", flatX, flatY, color); cmd != nil {
+		if cmd := e.CreateGlyphCommand(glyphName, accX, accY, color); cmd != nil {
 			buffer.AddCommand(*cmd)
 		}
 	}
