@@ -72,35 +72,74 @@ func (e *Engraver) bboxWidthInPixels(bbox musicfont.GlyphBBox) float32 {
 	return units.StaffSpacesToPixels(float32(widthStaffSpaces))
 }
 
-// GenerateDrawCommands creates draw commands for the entire score
+// GenerateDrawCommands creates draw commands for the entire score with line breaking
 func (e *Engraver) GenerateDrawCommands(originX, originY float32, buffer *renderer.CommandBuffer) {
+	const maxLineWidth = 1000.0 // Maximum width before line break (pixels)
+	const lineHeight = 150.0    // Height between staff lines (pixels)
+
 	x := originX
 	y := originY
+	lineWidth := float32(0)
 
 	for _, measure := range e.Score.Measures {
 		// Calculate staff length for this measure
 		staffLength := e.MeasureLengthPx(measure)
 
-		// Add space for clef (always render treble clef for now)
+		// Add space for clef and key signature (only for first measure or after line break)
 		clefWidth := units.StaffSpacesToPixels(3.0)
-		staffLength += clefWidth
+		keySignatureWidth := e.getKeySignatureWidth()
+		prefixWidth := clefWidth + keySignatureWidth
+
+		// Check if this is the first measure of a line
+		isFirstMeasureOfLine := lineWidth == 0
+		if isFirstMeasureOfLine {
+			staffLength += prefixWidth
+		}
+
+		measureSpacing := units.StaffSpacesToPixels(2)
+		totalMeasureWidth := staffLength + measureSpacing
+
+		// Check if we need to break to a new line
+		if lineWidth > 0 && lineWidth+totalMeasureWidth > maxLineWidth {
+			// Start new line
+			x = originX
+			y += lineHeight
+			lineWidth = 0
+			isFirstMeasureOfLine = true
+			staffLength += prefixWidth // Add prefix for new line
+			totalMeasureWidth = staffLength + measureSpacing
+		}
 
 		// Draw staff lines
 		e.GenerateStaffCommands(x, y, staffLength, renderer.Black, buffer)
 
-		// Draw treble clef at beginning of measure (default)
-		if cmd := e.CreateGlyphCommand("gClef", x+units.StaffSpacesToPixels(0.5), y-units.StaffSpacesToPixels(2), renderer.Black); cmd != nil {
-			buffer.AddCommand(*cmd)
+		// Draw clef and key signature if first measure of line
+		if isFirstMeasureOfLine {
+			// Draw treble clef
+			if cmd := e.CreateGlyphCommand("gClef", x+units.StaffSpacesToPixels(0.5), y-units.StaffSpacesToPixels(2), renderer.Black); cmd != nil {
+				buffer.AddCommand(*cmd)
+			}
+
+			// Draw key signature after clef
+			e.GenerateKeySignatureCommands(x+clefWidth, y, renderer.Black, buffer)
 		}
 
-		// Start drawing elements after clef
-		elemX := x + clefWidth
+		// Start drawing elements
+		elemStartX := x
+		if isFirstMeasureOfLine {
+			elemStartX += prefixWidth
+		}
 
 		// Draw measure elements with proportional spacing
-		positions := measure.ElementPositions(staffLength-clefWidth, 0, units.StaffSpacesToPixels(1))
+		availableWidth := staffLength
+		if isFirstMeasureOfLine {
+			availableWidth -= prefixWidth
+		}
+		positions := measure.ElementPositions(availableWidth, 0, units.StaffSpacesToPixels(1))
 		for i, elem := range measure.Elements {
+			elemX := elemStartX
 			if i < len(positions) {
-				elemX = x + clefWidth + positions[i]
+				elemX = elemStartX + positions[i]
 			}
 
 			switch el := elem.(type) {
@@ -113,7 +152,104 @@ func (e *Engraver) GenerateDrawCommands(originX, originY float32, buffer *render
 			}
 		}
 
-		// Move to next measure with smaller spacing
-		x += staffLength + units.StaffSpacesToPixels(2) // reduced from 5 to 2
+		// Move to next measure position
+		x += totalMeasureWidth
+		lineWidth += totalMeasureWidth
+	}
+}
+
+// getKeySignatureWidth calculates the width needed for the key signature
+func (e *Engraver) getKeySignatureWidth() float32 {
+	sharps, flats := e.getKeySignatureAccidentals()
+	if sharps == 0 && flats == 0 {
+		return 0 // C major/A minor has no accidentals
+	}
+	accidentalCount := sharps + flats
+	return units.StaffSpacesToPixels(float32(accidentalCount) * 0.75) // 0.75 staff spaces per accidental
+}
+
+// GenerateKeySignatureCommands draws the key signature accidentals
+func (e *Engraver) GenerateKeySignatureCommands(x, y float32, color renderer.Color, buffer *renderer.CommandBuffer) {
+	sharps, flats := e.getKeySignatureAccidentals()
+
+	if sharps > 0 {
+		e.drawSharps(x, y, sharps, color, buffer)
+	} else if flats > 0 {
+		e.drawFlats(x, y, flats, color, buffer)
+	}
+}
+
+// getKeySignatureAccidentals returns the number of sharps or flats for the current key
+func (e *Engraver) getKeySignatureAccidentals() (sharps, flats int) {
+	tonic := e.Score.KeySignature.Tonic
+	mode := e.Score.KeySignature.Mode
+
+	// Major keys
+	if mode == "dur" || mode == "major" {
+		switch tonic {
+		case "C":
+			return 0, 0
+		case "G":
+			return 1, 0 // F#
+		case "D":
+			return 2, 0 // F#, C#
+		case "A":
+			return 3, 0 // F#, C#, G#
+		case "E":
+			return 4, 0 // F#, C#, G#, D#
+		case "B":
+			return 5, 0 // F#, C#, G#, D#, A#
+		case "F#":
+			return 6, 0 // F#, C#, G#, D#, A#, E#
+		case "C#":
+			return 7, 0 // All sharps
+		case "F":
+			return 0, 1 // Bb
+		case "Bb":
+			return 0, 2 // Bb, Eb
+		case "Eb":
+			return 0, 3 // Bb, Eb, Ab
+		case "Ab":
+			return 0, 4 // Bb, Eb, Ab, Db
+		case "Db":
+			return 0, 5 // Bb, Eb, Ab, Db, Gb
+		case "Gb":
+			return 0, 6 // Bb, Eb, Ab, Db, Gb, Cb
+		case "Cb":
+			return 0, 7 // All flats
+		}
+	}
+
+	// TODO: Add support for minor keys if needed
+	return 0, 0 // Default to C major
+}
+
+// drawSharps draws the specified number of sharps in key signature order
+func (e *Engraver) drawSharps(x, y float32, count int, color renderer.Color, buffer *renderer.CommandBuffer) {
+	// Sharp positions on treble clef (staff line offsets)
+	sharpPositions := []float32{2.5, 3.5, 2, 3, 1.5, 2.5, 1} // F#, C#, G#, D#, A#, E#, B#
+
+	for i := 0; i < count && i < len(sharpPositions); i++ {
+		sharpX := x + units.StaffSpacesToPixels(float32(i)*0.75)
+		sharpY := y - units.StaffSpacesToPixels(sharpPositions[i])
+
+		if cmd := e.CreateGlyphCommand("accidentalSharp", sharpX, sharpY, color); cmd != nil {
+			buffer.AddCommand(*cmd)
+		}
+	}
+}
+
+// drawFlats draws the specified number of flats in key signature order
+func (e *Engraver) drawFlats(x, y float32, count int, color renderer.Color, buffer *renderer.CommandBuffer) {
+	// Flat positions on treble clef (staff line offsets)
+	flatPositions := []float32{3, 1.5, 3.5, 2, 4, 2.5, 4.5} // Bb, Eb, Ab, Db, Gb, Cb, Fb
+
+	for i := 0; i < count && i < len(flatPositions); i++ {
+		flatX := x + units.StaffSpacesToPixels(float32(i)*0.75)
+		flatY := y - units.StaffSpacesToPixels(flatPositions[i])
+
+		if cmd := e.CreateGlyphCommand("accidentalFlat", flatX, flatY, color); cmd != nil {
+			buffer.AddCommand(*cmd)
+		}
 	}
 }
