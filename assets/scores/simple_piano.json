@@ -1,41 +1,68 @@
 {
-  "title": "Simple Piano Piece",
+  "title": "Piano Duet in C Major",
   "composer": "Example Composer",
   "instrument": "piano",
   "key_signature": { "tonic": "C", "mode": "dur" },
   "time_signature": { "numerator": 4, "denominator": 4 },
   "tempo": 120,
-  "measures": [
+  "staves": [
     {
-      "number": 1,
-      "elements": [
-        { "type": "note", "pitch": 60, "duration": "quarter", "staff_line": 0, "accidental": "" },
-        { "type": "note", "pitch": 64, "duration": "quarter", "staff_line": 2, "accidental": "" },
-        { "type": "note", "pitch": 67, "duration": "quarter", "staff_line": 4, "accidental": "" },
-        { "type": "note", "pitch": 72, "duration": "quarter", "staff_line": 6, "accidental": "" }
+      "clef": "gClef",
+      "measures": [
+        {
+          "number": 1,
+          "elements": [
+            { "type": "note", "pitch": 72, "duration": "quarter", "staff_line": 6, "accidental": "" },
+            { "type": "note", "pitch": 74, "duration": "quarter", "staff_line": 7, "accidental": "" },
+            { "type": "note", "pitch": 76, "duration": "quarter", "staff_line": 8, "accidental": "" },
+            { "type": "note", "pitch": 77, "duration": "quarter", "staff_line": 9, "accidental": "" }
+          ]
+        },
+        {
+          "number": 2,
+          "elements": [
+            { "type": "note", "pitch": 79, "duration": "quarter", "staff_line": 10, "accidental": "" },
+            { "type": "note", "pitch": 77, "duration": "quarter", "staff_line": 9, "accidental": "" },
+            { "type": "note", "pitch": 76, "duration": "quarter", "staff_line": 8, "accidental": "" },
+            { "type": "note", "pitch": 74, "duration": "quarter", "staff_line": 7, "accidental": "" }
+          ]
+        },
+        {
+          "number": 3,
+          "elements": [
+            { "type": "note", "pitch": 72, "duration": "half", "staff_line": 6, "accidental": "" },
+            { "type": "rest", "duration": "half" }
+          ]
+        }
       ]
     },
     {
-      "number": 2,
-      "elements": [
-        { "type": "note", "pitch": 69, "duration": "quarter", "staff_line": 5, "accidental": "" },
-        { "type": "note", "pitch": 67, "duration": "quarter", "staff_line": 4, "accidental": "" },
-        { "type": "note", "pitch": 65, "duration": "quarter", "staff_line": 3, "accidental": "" },
-        { "type": "note", "pitch": 64, "duration": "quarter", "staff_line": 2, "accidental": "" }
-      ]
-    },
-    {
-      "number": 3,
-      "elements": [
-        { "type": "note", "pitch": 62, "duration": "quarter", "staff_line": 1, "accidental": "" },
-        { "type": "note", "pitch": 60, "duration": "quarter", "staff_line": 0, "accidental": "" },
-        { "type": "rest", "duration": "half" }
-      ]
-    },
-    {
-      "number": 4,
-      "elements": [
-        { "type": "note", "pitch": 60, "duration": "whole", "staff_line": 0, "accidental": "" }
+      "clef": "fClef",
+      "measures": [
+        {
+          "number": 1,
+          "elements": [
+            { "type": "note", "pitch": 48, "duration": "quarter", "staff_line": 0, "accidental": "" },
+            { "type": "note", "pitch": 52, "duration": "quarter", "staff_line": 2, "accidental": "" },
+            { "type": "note", "pitch": 55, "duration": "quarter", "staff_line": 4, "accidental": "" },
+            { "type": "note", "pitch": 60, "duration": "quarter", "staff_line": 6, "accidental": "" }
+          ]
+        },
+        {
+          "number": 2,
+          "elements": [
+            { "type": "note", "pitch": 55, "duration": "quarter", "staff_line": 4, "accidental": "" },
+            { "type": "note", "pitch": 52, "duration": "quarter", "staff_line": 2, "accidental": "" },
+            { "type": "note", "pitch": 50, "duration": "quarter", "staff_line": 1, "accidental": "" },
+            { "type": "note", "pitch": 48, "duration": "quarter", "staff_line": 0, "accidental": "" }
+          ]
+        },
+        {
+          "number": 3,
+          "elements": [
+            { "type": "note", "pitch": 48, "duration": "whole", "staff_line": 0, "accidental": "" }
+          ]
+        }
       ]
     }
   ]

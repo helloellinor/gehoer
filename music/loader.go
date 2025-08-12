@@ -18,6 +18,11 @@ type JSONMeasure struct {
 	Elements []JSONElement `json:"elements"`
 }
 
+type JSONStaff struct {
+	Clef     string        `json:"clef"`
+	Measures []JSONMeasure `json:"measures"`
+}
+
 type JSONScore struct {
 	Title        string `json:"title"`
 	Composer     string `json:"composer"`
@@ -31,7 +36,8 @@ type JSONScore struct {
 		Denominator int `json:"denominator"`
 	} `json:"time_signature"`
 	Tempo    int           `json:"tempo"`
-	Measures []JSONMeasure `json:"measures"`
+	Staves   []JSONStaff   `json:"staves,omitempty"`   // Multi-staff format
+	Measures []JSONMeasure `json:"measures,omitempty"` // Single-staff format (legacy)
 }
 
 func LoadScoreFromJSON(path string) (*Score, error) {
@@ -54,23 +60,62 @@ func LoadScoreFromJSON(path string) (*Score, error) {
 		score.Instrument = InstrumentTreble
 	}
 
-	for _, jm := range js.Measures {
-		measure := score.AddMeasure(nil) // Use default time signature or extend for per-measure
-		for _, elem := range jm.Elements {
-			switch elem.Type {
-			case "note":
-				dur := parseDuration(elem.Duration)
-				measure.AddNote(&Note{
-					Pitch:      elem.Pitch,
-					Duration:   dur,
-					StaffLine:  elem.StaffLine,
-					Accidental: elem.Accidental,
-				})
-			case "rest":
-				dur := parseDuration(elem.Duration)
-				measure.AddRest(&Rest{
-					Duration: dur,
-				})
+	// Handle multi-staff format
+	if len(js.Staves) > 0 {
+		for _, jsonStaff := range js.Staves {
+			staff := &Staff{
+				Clef:     jsonStaff.Clef,
+				Measures: make([]*Measure, 0),
+			}
+
+			for _, jm := range jsonStaff.Measures {
+				measure := &Measure{
+					Number:        jm.Number,
+					Elements:      make([]MusicElement, 0),
+					TimeSignature: score.TimeSignature,
+				}
+
+				for _, elem := range jm.Elements {
+					switch elem.Type {
+					case "note":
+						dur := parseDuration(elem.Duration)
+						measure.AddNote(&Note{
+							Pitch:      elem.Pitch,
+							Duration:   dur,
+							StaffLine:  elem.StaffLine,
+							Accidental: elem.Accidental,
+						})
+					case "rest":
+						dur := parseDuration(elem.Duration)
+						measure.AddRest(&Rest{
+							Duration: dur,
+						})
+					}
+				}
+				staff.Measures = append(staff.Measures, measure)
+			}
+			score.Staves = append(score.Staves, staff)
+		}
+	} else {
+		// Handle legacy single-staff format
+		for _, jm := range js.Measures {
+			measure := score.AddMeasure(nil) // Use default time signature or extend for per-measure
+			for _, elem := range jm.Elements {
+				switch elem.Type {
+				case "note":
+					dur := parseDuration(elem.Duration)
+					measure.AddNote(&Note{
+						Pitch:      elem.Pitch,
+						Duration:   dur,
+						StaffLine:  elem.StaffLine,
+						Accidental: elem.Accidental,
+					})
+				case "rest":
+					dur := parseDuration(elem.Duration)
+					measure.AddRest(&Rest{
+						Duration: dur,
+					})
+				}
 			}
 		}
 	}

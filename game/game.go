@@ -46,7 +46,7 @@ func (g *Game) init() {
 	g.scoreSelected = false
 
 	// Load sample score from JSON file
-	score, err := music.LoadScoreFromJSON("assets/scores/lisa_gikk_til_skolen.json")
+	score, err := music.LoadScoreFromJSON("assets/scores/simple_piano.json")
 	if err != nil {
 		panic("Failed to load score JSON: " + err.Error())
 	}
